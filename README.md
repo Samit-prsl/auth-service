@@ -1,98 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# MedHelp Auth Service Setup Guide
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This guide will walk you through setting up the **Auth Service** and the containerized database environment using Docker Compose and Prisma 7.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Setup Steps
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+### 1. Environment Configuration
+First, you need to create your local configuration `.env` file. You can easily clone the template configuration using the following terminal command:
 
 ```bash
-$ pnpm install
+cp .env.example .env
 ```
 
-## Compile and run the project
+Open the newly created `.env` file and make sure the required environment variables are configured (such as database credentials and pgAdmin login tokens):
+
+```ini
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=auth_db_medhelp
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
+
+PGADMIN_DEFAULT_EMAIL=admin@medhelp.com
+PGADMIN_DEFAULT_PASSWORD=adminpassword
+```
+
+### 2. Build and Start the Containers
+Compile the application environment and launch all necessary background services (Node.js application container, PostgreSQL database engine, and pgAdmin administration client) by executing:
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+docker compose up --build
 ```
+*(Note: If you are using an older Docker setup, use `docker-compose up --build` instead).*
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ pnpm run test
+## 🗄️ Database Management with pgAdmin
 
-# e2e tests
-$ pnpm run test:e2e
+Once all your containers are fully built and running, you can manage your database visual tables directly from your browser.
 
-# test coverage
-$ pnpm run test:cov
-```
+### 3. Log In to pgAdmin
+1. Open your web browser and navigate to: **[http://localhost:5050](http://localhost:5050)**
+2. Log in using the default administrative credentials defined in your `.env` file:
+   * **Email:** `admin@medhelp.com` (or your customized `PGADMIN_DEFAULT_EMAIL`)
+   * **Password:** `adminpassword` (or your customized `PGADMIN_DEFAULT_PASSWORD`)
 
-## Deployment
+### 4. Register the Postgres Server
+Since pgAdmin is running *inside* the isolated Docker network environment alongside your application, it connects internally to the database service. 
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+To link your database:
+1. Right-click on **Servers** -> **Register** -> **Server...**
+2. In the **General** tab:
+   * **Name:** `MedHelp Auth DB` (or any label you prefer)
+3. In the **Connection** tab, input the following configuration parameters exactly:
+   * **Host name/address:** `postgres` *(Crucial: Do **NOT** use `localhost` here. Since pgAdmin is operating within the Docker network bridge, it resolves the Postgres container directly via its service name).*
+   * **Port:** `5432` *(Use the native internal container port).*
+   * **Maintenance database:** `auth_db_medhelp` *(Must match your `.env` `POSTGRES_DB`)*.
+   * **Username:** `postgres` *(Must match your `.env` `POSTGRES_USER`)*.
+   * **Password:** `postgres` *(Must match your `.env` `POSTGRES_PASSWORD`)*.
+4. Toggle **Save password?** to active.
+5. Click **Save**.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Your database hierarchy is now available in the left navigation sidebar!
