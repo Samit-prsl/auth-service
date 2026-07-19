@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +8,125 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum OffDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  branch      String
+  email       String?
+  phone       String?
+  address     String
+  latitude    Decimal?
+  longitude   Decimal?
+  gstNumber   String?
+  storeTiming String
+  offDay      OffDay
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String?
+  updatedById String?
+  createdBy   Employee? @relation("TenantCreatedBy", fields: [createdById], references: [id])
+  updatedBy   Employee? @relation("TenantUpdatedBy", fields: [updatedById], references: [id])
+
+  employees Employee[]
+  roles     Role[]
+
+  @@unique([name, branch])
+}
+
+model Employee {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  email       String?  @unique
+  phone       String?  @unique
+  password    String
+  age         Int?
+  address     String?
+  insuranceId String?
+  shiftTiming String?
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String?
+  updatedById String?
+  createdBy   Employee? @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  updatedBy   Employee? @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id])
+
+  createdTenants   Tenant[]       @relation("TenantCreatedBy")
+  updatedTenants   Tenant[]       @relation("TenantUpdatedBy")
+  createdEmployees Employee[]     @relation("EmployeeCreatedBy")
+  updatedEmployees Employee[]     @relation("EmployeeUpdatedBy")
+  createdRoles     Role[]         @relation("RoleCreatedBy")
+  updatedRoles     Role[]         @relation("RoleUpdatedBy")
+  assignedRoles    EmployeeRole[] @relation("RoleAssignedBy")
+  employeeRoles    EmployeeRole[] @relation("EmployeeToRole")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String?
+  updatedById String?
+  createdBy   Employee? @relation("RoleCreatedBy", fields: [createdById], references: [id])
+  updatedBy   Employee? @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
+
+  employeeRoles EmployeeRole[]
+  permissions   RolePermission[]
+
+  @@unique([tenantId, name])
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+}
+
+model EmployeeRole {
+  employeeId String
+  roleId     String
+  employee   Employee @relation("EmployeeToRole", fields: [employeeId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  assignedById String?
+  assignedBy   Employee? @relation("RoleAssignedBy", fields: [assignedById], references: [id])
+
+  @@id([employeeId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
 }
