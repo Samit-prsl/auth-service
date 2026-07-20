@@ -75,6 +75,7 @@ model Employee {
   updatedRoles     Role[]         @relation("RoleUpdatedBy")
   assignedRoles    EmployeeRole[] @relation("RoleAssignedBy")
   employeeRoles    EmployeeRole[] @relation("EmployeeToRole")
+  refreshTokens    RefreshToken[]
 }
 
 model Role {
@@ -128,4 +129,15 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  refreshToken String   @unique
+  revoked      Boolean  @default(false)
+  expiry       DateTime
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
