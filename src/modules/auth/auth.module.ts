@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwtAuth.guard';
+import { GenerateTokensProvider } from './providers/generate-token.provider';
+import { RefreshTokenProvider } from './providers/refresh-token.provider';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { JwtAuthGuard } from './jwtAuth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, GenerateTokensProvider, RefreshTokenProvider],
   exports: [JwtAuthGuard],
 })
 export class AuthModule {}
