@@ -26,7 +26,7 @@ export class AuthService {
       throw new BadRequestException('Email is not registered');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, existingEmployee.password);
+    const isPasswordValid = await bcrypt.compare(password, existingEmployee?.password!);
 
     if (!isPasswordValid) {
       throw new BadRequestException('Email or password is wrong');

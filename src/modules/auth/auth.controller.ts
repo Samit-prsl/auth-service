@@ -3,9 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagg
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './public.decorator';
-import { parseMaxAge } from 'src/common/utils/calculate-expiry.utils';
 import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
+import { setRefreshTokenCookie } from 'src/common/utils/setRefreshTokenCookie.utils';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -25,7 +25,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { accessToken, refreshToken } = await this.authService.login(dto);
-    this.setRefreshTokenCookie(res, refreshToken);
+    setRefreshTokenCookie(res, refreshToken, this.configService.get<string>('NODE_ENV') === 'production', this.configService.get<string>('REFRESH_TOKEN_TTL')!);
     return { accessToken };
   }
 
@@ -44,17 +44,7 @@ export class AuthController {
       throw new UnauthorizedException('Token not found');
     }
     const { accessToken, refreshToken } = await this.authService.refreshTokens(refresh_token);
-    this.setRefreshTokenCookie(res, refreshToken);
+    setRefreshTokenCookie(res, refreshToken, this.configService.get<string>('NODE_ENV') === 'production', this.configService.get<string>('REFRESH_TOKEN_TTL')!);
     return { accessToken };
-  }
-
-  private setRefreshTokenCookie(res: Response, refreshToken: string) {
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: parseMaxAge(this.configService.get<string>('REFRESH_TOKEN_TTL')!),
-    });
   }
 }
