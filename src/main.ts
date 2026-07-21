@@ -14,6 +14,11 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
+  app.enableCors({
+    origin: 'http://localhost:3500',
+    credintials: true
+  })
+
   setupSwagger(app);
   const jwtGuard = app.get(JwtAuthGuard);
   app.useGlobalGuards(jwtGuard);

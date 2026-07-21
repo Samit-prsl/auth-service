@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
-import { calculateExpiry } from "src/common/utils/calculate-expiry.utils";
+import { calculateExpiry } from "src/common/utils/calculateExpiry.utils";
 
 @Injectable()
 export class RefreshTokenProvider {
