@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -15,6 +16,8 @@ interface EmployeeTokenPayload {
 
 @Injectable()
 export class GenerateTokensProvider {
+  private readonly logger = new Logger(GenerateTokensProvider.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
@@ -34,7 +37,7 @@ export class GenerateTokensProvider {
         { expiresIn: expiresIn as any }
       );
     } catch (error) {
-      console.log("error : ",error)
+      this.logger.error(`Failed to generate token for user ${userId}`, error.stack);
       throw new InternalServerErrorException(
         "Failed to generate token"
       );
@@ -42,6 +45,7 @@ export class GenerateTokensProvider {
   }
 
   public async generateTokens(employee: EmployeeTokenPayload) {
+    this.logger.debug(`Generating tokens for employee ${employee.id}`);
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken(
         employee.id,

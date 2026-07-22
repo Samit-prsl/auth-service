@@ -1,10 +1,12 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { calculateExpiry } from "src/common/utils/calculateExpiry.utils";
 
 @Injectable()
 export class RefreshTokenProvider {
+  private readonly logger = new Logger(RefreshTokenProvider.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -23,8 +25,10 @@ export class RefreshTokenProvider {
         },
       });
 
+      this.logger.debug(`Stored refresh token for employee ${employeeId}`);
       return result.refreshToken;
     } catch (error) {
+      this.logger.error(`Failed to store refresh token for employee ${employeeId}`, error.stack);
       throw new InternalServerErrorException("Failed to store refresh token");
     }
   }
@@ -37,6 +41,7 @@ export class RefreshTokenProvider {
   }
 
   async revokeRefreshToken(token: string) {
+    this.logger.debug(`Revoking refresh token`);
     return this.prisma.refreshToken.updateMany({
       where: { refreshToken: token },
       data: { revoked: true },
@@ -62,7 +67,10 @@ export class RefreshTokenProvider {
           },
         });
       });
+
+      this.logger.debug(`Updated refresh token for employee ${employeeId}`);
     } catch (error) {
+      this.logger.error(`Failed to update refresh token for employee ${employeeId}`, error.stack);
       throw new InternalServerErrorException("Unable to update token, Please retry");
     }
   }

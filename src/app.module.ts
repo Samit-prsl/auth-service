@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OauthModule } from './modules/oauth/oauth.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { TenantModule } from './modules/tenant/tenant.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
     OauthModule,
     EmployeeModule,
     TenantModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
