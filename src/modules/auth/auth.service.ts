@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +8,8 @@ import { RefreshTokenProvider } from './providers/refresh-token.provider';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly generateTokensProvider: GenerateTokensProvider,
@@ -23,12 +25,14 @@ export class AuthService {
     });
 
     if (!existingEmployee) {
+      this.logger.warn(`Login failed: email ${email} not found`);
       throw new BadRequestException('Email is not registered');
     }
 
     const isPasswordValid = await bcrypt.compare(password, existingEmployee?.password!);
 
     if (!isPasswordValid) {
+      this.logger.warn(`Login failed: invalid password for ${email}`);
       throw new BadRequestException('Email or password is wrong');
     }
 
@@ -36,6 +40,7 @@ export class AuthService {
 
     await this.refreshTokenProvider.storeRefreshToken(refreshToken, existingEmployee.id);
 
+    this.logger.log(`User ${email} logged in successfully`);
     return { accessToken, refreshToken };
   }
 
@@ -44,14 +49,17 @@ export class AuthService {
     const storedToken = await this.refreshTokenProvider.findRefreshToken(token);
 
     if (!storedToken) {
+      this.logger.warn('Refresh failed: invalid token');
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (storedToken.revoked) {
+      this.logger.warn('Refresh failed: token revoked');
       throw new UnauthorizedException('Refresh token has been revoked');
     }
 
     if (new Date() > storedToken.expiry) {
+      this.logger.warn('Refresh failed: token expired');
       throw new UnauthorizedException('Refresh token has expired');
     }
 
@@ -60,6 +68,7 @@ export class AuthService {
     });
 
     if (!employee || employee.isDeleted) {
+      this.logger.warn(`Refresh failed: employee ${storedToken.employeeId} not found`);
       throw new UnauthorizedException('Employee not found');
     }
 
@@ -72,6 +81,7 @@ export class AuthService {
       employee.id,
     );
 
+    this.logger.log(`Tokens refreshed for employee ${employee.id}`);
     return { accessToken, refreshToken: newRefreshToken };
   }
 }

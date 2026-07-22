@@ -1,9 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleUser } from './interface/GoogleUser';
 
 @Injectable()
 export class EmployeeService {
+    private readonly logger = new Logger(EmployeeService.name);
+
     constructor(
         private readonly prisma: PrismaService
     ){}
@@ -15,6 +17,7 @@ export class EmployeeService {
             })
             return emp
         } catch (error) {
+            this.logger.error(`Failed to fetch employee by googleId ${googleId}`, error.stack);
             throw new InternalServerErrorException('Internal server error, while fetching employee by googleId')
         }
     }
@@ -39,8 +42,10 @@ export class EmployeeService {
                 });
             });
 
+            this.logger.log(`Created new employee: ${emp.email}`);
             return emp;
         } catch (error) {
+            this.logger.error(`Failed to create employee for ${googleUser.email}`, error.stack);
             throw new InternalServerErrorException('Internal server error while creating employee account');
         }
     }
