@@ -23,7 +23,27 @@ DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/$
 
 PGADMIN_DEFAULT_EMAIL=admin@medhelp.com
 PGADMIN_DEFAULT_PASSWORD=adminpassword
+
+REDIS_HOST=redis
+REDIS_PORT=6379
 ```
+
+### 1a. Redis Setup
+The project uses **Redis 7** (Alpine) for caching, running as a Docker container. It is included in the `docker-compose.yml` and starts automatically with `docker compose up`.
+
+Key details:
+- **Container name:** `auth_redis`
+- **Port:** `6379`
+- **Connection:** The NestJS app connects via `ioredis` using the `REDIS_HOST` and `REDIS_PORT` environment variables. Inside Docker, use `REDIS_HOST=redis` (the service name) — do **not** use `localhost`.
+- **Persistence:** Data is stored in the `redis-data` Docker volume.
+
+To verify Redis is running:
+
+```bash
+docker exec -it auth_redis redis-cli ping
+```
+
+A response of `PONG` confirms Redis is healthy.
 
 ### 2. Build and Start the Containers
 Compile the application environment and launch all necessary background services (Node.js application container, PostgreSQL database engine, and pgAdmin administration client) by executing:
